@@ -20,6 +20,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Check JavaScript syntax
         run: node --check app.js
+      - name: Run large-cohort dashboard test
+        run: node tests/admin-dashboard.test.cjs
       - name: Check referenced files and dashboard control IDs
         run: |
           python3 - <<'PY'
