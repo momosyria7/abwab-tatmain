@@ -1,0 +1,57 @@
+name: Validate Abwab Tatmain
+
+on:
+  push:
+    branches:
+      - main
+      - 'dev/**'
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  static-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: node --check app.js
+      - name: Run large-cohort dashboard test
+        run: node tests/admin-dashboard.test.cjs
+      - name: Generate anonymous visual preview pages
+        run: python3 tests/build_visual_previews.py
+      - name: Install browser test tooling
+        run: |
+          python3 -m pip install --break-system-packages playwright==1.56.0
+          python3 -m playwright install chromium --with-deps
+      - name: Check mobile and desktop layouts and capture screenshots
+        run: python3 tests/check_visual_previews.py
+      - name: Save visual preview screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: abwab-visual-review
+          path: tests/screenshots/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Check referenced files and dashboard control IDs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          h=Path('index.html').read_text(encoding='utf-8')
+          j=Path('app.js').read_text(encoding='utf-8')
+          assert Path('styles.css').is_file(), 'Stylesheet missing'
+          css=Path('styles.css').read_text(encoding='utf-8')
+          assert 'html[data-theme="dark"]' in css, 'Dark mode CSS missing'
+          assert '@media (max-width: 620px)' in css, 'Mobile CSS missing'
+          assert 'href="styles.css?v=design1"' in h, 'Stylesheet not linked'
+          required=['id="adminSearch"','id="adminSort"','id="adminPrev"','id="adminNext"','id="adminInvitations"','src="app.js?v=admin3"']
+          assert all(x in h for x in required), 'Missing dashboard elements'
+          assert 'async function adminLoad()' in j, 'Dashboard logic missing'
+          assert 'sb_secret_' not in j and 'service_role' not in j, 'Do not commit privileged keys'
+          print('Static validation passed')
+          PY
