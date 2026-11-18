@@ -6,11 +6,11 @@ let db=null,user=null,profile=null,students=[],parents=[],links=[],progress=[],r
 const show=(id,on=true)=>$(id).classList.toggle('hidden',!on);
 function notice(s,err=false){$('status').textContent=s;$('status').className=err?'error':'success'}
 function check(data){if(data.error)throw data.error;return data.data}
-function config(){try{return JSON.parse(localStorage.getItem('quantConfig')||'null')}catch{return null}}
-function initDb(){const c=config();if(!c)return false;if(!window.supabase){notice('تعذر تحميل مكتبة الاتصال؛ تحقق من الإنترنت.',true);return false}db=window.supabase.createClient(c.url,c.key);show('setup',false);show('auth');return true}
+const SUPABASE_URL='https://hxogatyazevahtxwbwhv.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_fuqGm3QCslmgC48J1NgCXg_liibKSRz';
+function initDb(){show('setup',false);if(!window.supabase){notice('تعذر تحميل مكتبة الاتصال؛ تحقق من الإنترنت.',true);return false}db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);show('auth');return true}
 $('themeBtn').onclick=()=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';localStorage.setItem('quantTheme',dark?'dark':'light');$('themeBtn').textContent=dark?'☀️':'🌙'};
 if(localStorage.getItem('quantTheme')==='dark'){$('themeBtn').click()}
-$('configForm').onsubmit=e=>{e.preventDefault();localStorage.setItem('quantConfig',JSON.stringify({url:$('url').value.trim().replace(/\/$/,''),key:$('anon').value.trim()}));location.reload()};
 $('loginForm').onsubmit=async e=>{e.preventDefault();try{notice('جارٍ تسجيل الدخول...');check(await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}));await loadSession()}catch(x){notice(x.message,true)}};
 $('signupForm').onsubmit=async e=>{e.preventDefault();try{const email=$('signupEmail').value.trim().toLowerCase();check(await db.auth.signUp({email,password:$('signupPassword').value,options:{data:{full_name:$('signupName').value.trim()}}}));notice('تم تقديم التسجيل. تحقق من بريدك للتفعيل ثم سجل الدخول.')}catch(x){notice(x.message,true)}};
 $('logout').onclick=async()=>{await db.auth.signOut();user=null;profile=null;show('app',false);show('auth');show('logout',false);$('who').textContent='';notice('تم تسجيل الخروج')};
