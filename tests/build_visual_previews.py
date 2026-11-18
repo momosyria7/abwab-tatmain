@@ -20,7 +20,7 @@ view = view.replace('id="welcome"></h2>', 'id="welcome">مرحبًا، مستخ�
 view = view.replace('id="roleDescription"></p>', 'id="roleDescription">متابعة الرحلة التعليمية من مكان واحد</p>')
 view = view.replace('id="roleMotto"></p>', 'id="roleMotto">كل طالب أمانة، وكل تقدّم مسؤولية.</p>')
 for role in ("admin", "student", "parent"):
-    html = view.replace(f'class="hidden" id="{role}View"', f'id="{role}View"')
+    html = view.replace(f'id="{role}View" class="hidden"', f'id="{role}View"')
     if role == "admin":
         html = html.replace('id="studentCount">0</strong>', 'id="studentCount">900</strong>')
         html = html.replace('id="parentCount">0</strong>', 'id="parentCount">200</strong>')
