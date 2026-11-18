@@ -28,6 +28,11 @@ jobs:
           from pathlib import Path
           h=Path('index.html').read_text(encoding='utf-8')
           j=Path('app.js').read_text(encoding='utf-8')
+          assert Path('styles.css').is_file(), 'Stylesheet missing'
+          css=Path('styles.css').read_text(encoding='utf-8')
+          assert 'html[data-theme="dark"]' in css, 'Dark mode CSS missing'
+          assert '@media (max-width: 620px)' in css, 'Mobile CSS missing'
+          assert 'href="styles.css?v=design1"' in h, 'Stylesheet not linked'
           required=['id="adminSearch"','id="adminSort"','id="adminPrev"','id="adminNext"','id="adminInvitations"','src="app.js?v=admin3"']
           assert all(x in h for x in required), 'Missing dashboard elements'
           assert 'async function adminLoad()' in j, 'Dashboard logic missing'
