@@ -34,6 +34,17 @@ html[data-theme="dark"] {
   --focus: rgba(116, 168, 255, .25);
   --ring: #9ac1ff;
 }
+html[data-theme="dark"] .auth-tab.active {
+  background: #2c60bd;
+  color: #ffffff;
+}
+html[data-theme="dark"] .auth-tab.active:hover {
+  background: #3470d5;
+}
+html[data-theme="dark"] .password-toggle {
+  background: #203552;
+  color: #f3f7ff;
+}
 html { scroll-behavior: smooth; }
 body {
   min-height: 100vh;
