@@ -8,9 +8,57 @@ function notice(s,err=false){$('status').textContent=s;$('status').className=err
 function check(data){if(data.error)throw data.error;return data.data}
 const SUPABASE_URL='https://hxogatyazevahtxwbwhv.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_fuqGm3QCslmgC48J1NgCXg_liibKSRz';
-function initDb(){show('setup',false);if(!window.supabase){notice('تعذر تحميل مكتبة الاتصال؛ تحقق من الإنترنت.',true);return false}db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);show('auth');return true}
+function initDb(){
+  show('setup',false);
+  if(!window.supabase){notice('تعذر تحميل مكتبة الاتصال؛ تحقق من الإنترنت.',true);return false}
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+  show('auth');
+  db.auth.onAuthStateChange((event)=>{
+    if(event==='PASSWORD_RECOVERY'){
+      setAuthMode('reset');
+      notice('تم التحقق من رابط الاستعادة. أدخل كلمة المرور الجديدة.');
+    }
+  });
+  return true;
+}
 $('themeBtn').onclick=()=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';localStorage.setItem('quantTheme',dark?'dark':'light');$('themeBtn').textContent=dark?'☀️':'🌙'};
 if(localStorage.getItem('quantTheme')==='dark'){$('themeBtn').click()}
+function setAuthMode(mode){
+  ['loginPanel','activatePanel','forgotPanel','resetPanel'].forEach(id=>show(id,false));
+  const panels={login:'loginPanel',activate:'activatePanel',forgot:'forgotPanel',reset:'resetPanel'};
+  show(panels[mode]||panels.login);
+  $('authTabs').classList.toggle('hidden',mode==='reset');
+  document.querySelectorAll('[data-auth-mode]').forEach(b=>{
+    const active=b.dataset.authMode===mode;
+    b.classList.toggle('active',active);
+    b.setAttribute('aria-selected',String(active));
+  });
+  notice('');
+}
+document.querySelectorAll('[data-auth-mode]').forEach(b=>b.onclick=()=>setAuthMode(b.dataset.authMode));
+document.querySelectorAll('[data-toggle-password]').forEach(b=>b.onclick=()=>{const input=$(b.dataset.togglePassword);const visible=input.type==='password';input.type=visible?'text':'password';b.textContent=visible?'إخفاء':'إظهار';b.setAttribute('aria-label',visible?'إخفاء كلمة المرور':'إظهار كلمة المرور')});
+$('forgotLink').onclick=()=>setAuthMode('forgot');
+$('backToLogin').onclick=()=>setAuthMode('login');
+$('forgotForm').onsubmit=async e=>{
+  e.preventDefault();
+  try{
+    notice('جارٍ إرسال رابط الاستعادة...');
+    const email=$('forgotEmail').value.trim();
+    check(await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname}));
+    notice('إذا كان البريد مسجّلًا، ستصلك رسالة لاستعادة كلمة المرور. افحص البريد غير الهام أيضًا.');
+  }catch(x){notice('تعذّر إرسال طلب الاستعادة: '+x.message,true)}
+};
+$('resetForm').onsubmit=async e=>{
+  e.preventDefault();
+  const password=$('newPassword').value;
+  if(password!==$('confirmPassword').value){notice('كلمتا المرور غير متطابقتين.',true);return}
+  try{
+    check(await db.auth.updateUser({password}));
+    await db.auth.signOut();
+    setAuthMode('login');
+    notice('تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.');
+  }catch(x){notice('تعذّر تحديث كلمة المرور: '+x.message,true)}
+};
 $('loginForm').onsubmit=async e=>{e.preventDefault();try{notice('جارٍ تسجيل الدخول...');check(await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}));await loadSession()}catch(x){notice(x.message,true)}};
 $('signupForm').onsubmit=async e=>{e.preventDefault();try{const email=$('signupEmail').value.trim().toLowerCase();check(await db.auth.signUp({email,password:$('signupPassword').value,options:{data:{full_name:$('signupName').value.trim()}}}));notice('تم تقديم التسجيل. تحقق من بريدك للتفعيل ثم سجل الدخول.')}catch(x){notice(x.message,true)}};
 $('logout').onclick=async()=>{await db.auth.signOut();user=null;profile=null;show('app',false);show('auth');show('logout',false);$('who').textContent='';notice('تم تسجيل الخروج')};
@@ -27,4 +75,8 @@ $('reportForm').onsubmit=async e=>{e.preventDefault();try{const sid=$('reportStu
 async function parentLoad(){links=check(await db.from('parent_student').select('*').eq('parent_id',user.id));const ids=links.map(x=>x.student_id);if(!ids.length){$('children').innerHTML='<p class="notice">لم يربط المشرف أي طالب بحسابك بعد.</p>';$('parentReports').innerHTML='';return}students=check(await db.from('profiles').select('id,full_name').in('id',ids));progress=check(await db.from('progress').select('*').in('student_id',ids));reports=check(await db.from('reports').select('*').in('student_id',ids).order('created_at',{ascending:false}));$('children').innerHTML=students.map(s=>{const a=stats(progress.filter(x=>x.student_id===s.id));return `<div class="report"><h3>${esc(s.full_name)}</h3><p>${a.done} من 23 محاضرة · ${a.points} نقطة · ${a.percent}% إنجاز</p><div class="bar"><i style="width:${a.percent}%"></i></div><details><summary>تفاصيل المحاضرات</summary>${plan.flatMap(d=>d.lectures).map(n=>{const x=progress.find(p=>p.student_id===s.id&&p.lecture===n);return `<p>المحاضرة ${n}: مشاهدة ${x?.watched?'✓':'—'} · تدريب ${x?.practiced?'✓':'—'}</p>`}).join('')}</details></div>`}).join('');$('parentReports').innerHTML=reports.map(reportCard).join('')||'<p class="muted">لم ينشر المشرف أي تقرير بعد.</p>'}
 function reportCard(r){const student=students.find(s=>s.id===r.student_id);return `<article class="report"><strong>${esc(r.title)}</strong><p class="muted">${esc(student?.full_name||'الطالب')} · ${new Date(r.created_at).toLocaleDateString('ar-SA')}</p><p>${esc(r.notes)}</p><p>المكتمل: ${r.completed}/23 · النقاط: ${r.points} · نسبة الإنجاز: ${r.percent}%</p>${profile.role==='admin'?`<button class="secondary emailReport" data-report="${r.id}">تجهيز رسالة بريد لولي الأمر</button>`:''}</article>`}
 function bindEmailButtons(){$('adminReports').querySelectorAll('.emailReport').forEach(b=>b.onclick=()=>{const r=reports.find(x=>x.id===b.dataset.report),s=students.find(x=>x.id===r.student_id),emails=links.filter(x=>x.student_id===r.student_id).map(x=>parents.find(p=>p.id===x.parent_id)?.email).filter(Boolean);if(!emails.length){notice('اربط ولي أمر بالطالب أولًا',true);return}const body=`الطالب: ${s.full_name}\n${r.title}\n${r.notes}\nالمحاضرات المكتملة: ${r.completed}/23\nالنقاط: ${r.points}\nنسبة الإنجاز: ${r.percent}%`;location.href='mailto:'+emails.map(encodeURIComponent).join(',')+'?subject='+encodeURIComponent(r.title)+'&body='+encodeURIComponent(body)})}
-if(initDb())loadSession().catch(x=>notice(x.message,true));
+if(initDb()){
+  const recovering=location.hash.includes('type=recovery')||location.search.includes('type=recovery');
+  if(recovering)setAuthMode('reset');
+  else loadSession().catch(x=>notice(x.message,true));
+}
