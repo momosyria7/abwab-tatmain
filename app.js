@@ -83,10 +83,6 @@ function closeAccount(){
 $('accountShortcut').onclick=openAccount;
 $('accountBack').onclick=closeAccount;
 
-  $('accountName').textContent=profile?.full_name||'—';
-  $('accountEmail').textContent=user?.email||'—';
-  $('accountRole').textContent=({admin:'مشرف',student:'طالب',parent:'ولي أمر'}[profile?.role]||'—');
-}
 $('changePasswordForm').onsubmit=async e=>{
   e.preventDefault();
   const password=$('accountNewPassword').value;
