@@ -61,10 +61,28 @@ $('resetForm').onsubmit=async e=>{
 };
 $('loginForm').onsubmit=async e=>{e.preventDefault();try{notice('جارٍ تسجيل الدخول...');check(await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}));await loadSession()}catch(x){notice(x.message,true)}};
 $('signupForm').onsubmit=async e=>{e.preventDefault();try{const email=$('signupEmail').value.trim().toLowerCase();check(await db.auth.signUp({email,password:$('signupPassword').value,options:{data:{full_name:$('signupName').value.trim()}}}));notice('تم تقديم التسجيل. تحقق من بريدك للتفعيل ثم سجل الدخول.')}catch(x){notice(x.message,true)}};
-$('logout').onclick=async()=>{await db.auth.signOut();user=null;profile=null;show('app',false);show('auth');show('logout',false);$('who').textContent='';notice('تم تسجيل الخروج')};
+$('logout').onclick=async()=>{await db.auth.signOut();user=null;profile=null;show('app',false);show('accountView',false);show('accountShortcut',false);show('auth');show('logout',false);$('who').textContent='';notice('تم تسجيل الخروج')};
 $('refresh').onclick=()=>refresh();
-async function loadSession(){const {data:{user:u},error}=await db.auth.getUser();if(error||!u){show('auth');return}user=u;const p=check(await db.from('profiles').select('*').eq('id',u.id).maybeSingle());if(!p){notice('الحساب غير مخوّل. اطلب دعوة من المشرف.',true);await db.auth.signOut();return}profile=p;renderAccount();show('auth',false);show('app');show('logout');$('who').textContent=p.full_name+' · '+({admin:'مشرف',student:'طالب',parent:'ولي أمر'}[p.role]||p.role);$('welcome').textContent='مرحبًا، '+p.full_name;$('roleDescription').textContent={admin:'إدارة الطلاب والتقارير والروابط الأسرية',student:'أنت وحدك من يعتمد إكمال المهام',parent:'اطلع على إنجازات أبنائك وتقارير المشرف'}[p.role];$('roleMotto').textContent={admin:'كل طالب أمانة، وكل تقدّم مسؤولية.',student:'إنجاز اليوم هو بداية نجاح الغد.',parent:'كن قريبًا من إنجازاته، وشريكًا في نجاحه.'}[p.role];['studentView','adminView','parentView'].forEach(id=>show(id,id===p.role+'View'));await refresh()}
+async function loadSession(){const {data:{user:u},error}=await db.auth.getUser();if(error||!u){show('auth');return}user=u;const p=check(await db.from('profiles').select('*').eq('id',u.id).maybeSingle());if(!p){notice('الحساب غير مخوّل. اطلب دعوة من المشرف.',true);await db.auth.signOut();return}profile=p;renderAccount();show('auth',false);show('accountView',false);show('app');show('accountShortcut');show('logout');$('who').textContent=p.full_name+' · '+({admin:'مشرف',student:'طالب',parent:'ولي أمر'}[p.role]||p.role);$('welcome').textContent='مرحبًا، '+p.full_name;$('roleDescription').textContent={admin:'إدارة الطلاب والتقارير والروابط الأسرية',student:'أنت وحدك من يعتمد إكمال المهام',parent:'اطلع على إنجازات أبنائك وتقارير المشرف'}[p.role];$('roleMotto').textContent={admin:'كل طالب أمانة، وكل تقدّم مسؤولية.',student:'إنجاز اليوم هو بداية نجاح الغد.',parent:'كن قريبًا من إنجازاته، وشريكًا في نجاحه.'}[p.role];['studentView','adminView','parentView'].forEach(id=>show(id,id===p.role+'View'));await refresh()}
 function renderAccount(){
+  $('accountName').textContent=profile?.full_name||'—';
+  $('accountEmail').textContent=user?.email||'—';
+  $('accountRole').textContent=({admin:'مشرف',student:'طالب',parent:'ولي أمر'}[profile?.role]||'—');
+  $('accountShortcutName').textContent=profile?.full_name||'حسابي';
+}
+function openAccount(){
+  show('app',false);
+  show('accountView',true);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function closeAccount(){
+  show('accountView',false);
+  show('app',true);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+$('accountShortcut').onclick=openAccount;
+$('accountBack').onclick=closeAccount;
+
   $('accountName').textContent=profile?.full_name||'—';
   $('accountEmail').textContent=user?.email||'—';
   $('accountRole').textContent=({admin:'مشرف',student:'طالب',parent:'ولي أمر'}[profile?.role]||'—');
