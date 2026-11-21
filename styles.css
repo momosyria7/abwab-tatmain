@@ -508,3 +508,14 @@ html[data-theme="dark"]{--accent:#f4cf62;--accent-soft:#3b3420}
 .password-settings summary{cursor:pointer;font-weight:800;color:var(--primary)}
 .password-change-form{margin-top:14px}
 @media(max-width:620px){.account-details{grid-template-columns:1fr}.section-heading{align-items:stretch}.section-heading>*{width:100%}#parentChildFilter{width:100%}.child-card{padding:15px}.child-metrics strong{font-size:16px}.child-metrics span{font-size:10px}}
+
+#studentView>.panel{position:relative;overflow:hidden}
+#studentView>.panel h2{display:flex;align-items:center;gap:8px}
+#studentView .stats .stat{position:relative;overflow:hidden}
+#studentView .stats .stat:nth-child(1){border-bottom:3px solid var(--accent)}
+#studentView .stats .stat:nth-child(2){border-bottom:3px solid var(--primary)}
+#studentView .stats .stat:nth-child(3){border-bottom:3px solid var(--success)}
+#days .day{background:var(--surface);box-shadow:var(--shadow)}
+#days .day[open] summary{color:var(--primary-strong);border-bottom:1px solid var(--line)}
+#days .lecture:nth-child(even){background:var(--surface-alt)}
+#days .checks input:focus-visible,#parentChildFilter:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
