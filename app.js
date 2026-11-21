@@ -185,7 +185,12 @@ async function parentLoad(){
   $('parentAverage').textContent=average+'%';
   $('parentTasks').textContent=totalTasks;
   renderParentChildren();
-  $('parentReports').innerHTML=reports.map(reportCard).join('')||'<p class="muted">لم ينشر المشرف أي تقرير بعد.</p>';
+  renderParentReports();
+}
+function renderParentReports(){
+  const selected=$('parentChildFilter').value;
+  const visible=selected==='all'?reports:reports.filter(r=>r.student_id===selected);
+  $('parentReports').innerHTML=visible.map(reportCard).join('')||'<p class="muted">لا توجد تقارير منشورة لهذا الاختيار حتى الآن.</p>';
 }
 function renderParentChildren(){
   const selected=$('parentChildFilter').value;
@@ -200,7 +205,7 @@ function renderParentChildren(){
     return `<article class="child-card"><div class="child-card-top"><div><span class="eyebrow">ملف الطالب</span><h3>${esc(s.full_name)}</h3></div><span class="child-percent">${a.percent}%</span></div><div class="child-metrics"><div><strong>${a.done}/23</strong><span>محاضرة مكتملة</span></div><div><strong>${a.points}</strong><span>نقطة</span></div><div><strong>${a.tasks}/46</strong><span>مهمة منجزة</span></div></div><div class="bar child-main-bar"><i style="width:${a.percent}%"></i></div><h4>التقدم حسب المرحلة</h4><div class="stage-list">${stages}</div><p class="muted child-last-report">${lastReport?'آخر تقرير: '+new Date(lastReport.created_at).toLocaleDateString('ar-SA'):'لا يوجد تقرير منشور بعد'}</p></article>`;
   }).join('')||'<p class="muted">لا توجد بيانات للعرض.</p>';
 }
-$('parentChildFilter').onchange=renderParentChildren;
+$('parentChildFilter').onchange=()=>{renderParentChildren();renderParentReports()};
 function reportCard(r){const student=students.find(s=>s.id===r.student_id);return `<article class="report"><strong>${esc(r.title)}</strong><p class="muted">${esc(student?.full_name||'الطالب')} · ${new Date(r.created_at).toLocaleDateString('ar-SA')}</p><p>${esc(r.notes)}</p><p>المكتمل: ${r.completed}/23 · النقاط: ${r.points} · نسبة الإنجاز: ${r.percent}%</p>${profile.role==='admin'?`<button class="secondary emailReport" data-report="${r.id}">تجهيز رسالة بريد لولي الأمر</button>`:''}</article>`}
 function bindEmailButtons(){$('adminReports').querySelectorAll('.emailReport').forEach(b=>b.onclick=()=>{const r=reports.find(x=>x.id===b.dataset.report),s=students.find(x=>x.id===r.student_id),emails=links.filter(x=>x.student_id===r.student_id).map(x=>parents.find(p=>p.id===x.parent_id)?.email).filter(Boolean);if(!emails.length){notice('اربط ولي أمر بالطالب أولًا',true);return}const body=`الطالب: ${s.full_name}\n${r.title}\n${r.notes}\nالمحاضرات المكتملة: ${r.completed}/23\nالنقاط: ${r.points}\nنسبة الإنجاز: ${r.percent}%`;location.href='mailto:'+emails.map(encodeURIComponent).join(',')+'?subject='+encodeURIComponent(r.title)+'&body='+encodeURIComponent(body)})}
 if(initDb()){
