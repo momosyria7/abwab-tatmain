@@ -4,7 +4,7 @@
 
 /* Keep Latin email addresses and credentials in their natural direction. */
 input[type="email"],input[type="password"],input[type="url"]{direction:ltr!important;text-align:left!important;unicode-bidi:plaintext}
-</style><link rel="stylesheet" href="styles.css?v=design1"></head><body><main class="wrap"><header class="hero"><div><span class="hero-kicker">✦ مساحة واحدة تجمع الطالب والأسرة والمشرف</span><h1>📖 أبواب تطمئن</h1><p class="slogan">نتابع تقدّمهم… لتطمئن قلوبكم</p><p class="intro">منصة تعليمية تجمع الطالب والمشرف وولي الأمر في رحلة واحدة، توثّق الإنجازات وتعزّز التواصل والثقة.</p><p class="intro hero-details">✦ 7 مراحل تعليمية &nbsp; · &nbsp; 23 محاضرة &nbsp; · &nbsp; متابعة وتقارير أسبوعية</p></div><button class="secondary" id="themeBtn" title="تبديل الوضع" aria-label="تبديل الوضع الداكن والفاتح">🌙</button></header><div class="toolbar"><span id="who"></span><button class="secondary hidden" id="logout">تسجيل الخروج</button><span id="status" role="status"></span></div>
+</style><link rel="stylesheet" href="styles.css?v=account-page1"></head><body><main class="wrap"><header class="hero"><div><span class="hero-kicker">✦ مساحة واحدة تجمع الطالب والأسرة والمشرف</span><h1>📖 أبواب تطمئن</h1><p class="slogan">نتابع تقدّمهم… لتطمئن قلوبكم</p><p class="intro">منصة تعليمية تجمع الطالب والمشرف وولي الأمر في رحلة واحدة، توثّق الإنجازات وتعزّز التواصل والثقة.</p><p class="intro hero-details">✦ 7 مراحل تعليمية &nbsp; · &nbsp; 23 محاضرة &nbsp; · &nbsp; متابعة وتقارير أسبوعية</p></div><button class="secondary" id="themeBtn" title="تبديل الوضع" aria-label="تبديل الوضع الداكن والفاتح">🌙</button></header><div class="toolbar"><span id="who"></span><button type="button" class="secondary hidden profile-shortcut" id="accountShortcut" aria-label="فتح الملف الشخصي"><span aria-hidden="true">♟</span><span id="accountShortcutName">الملف الشخصي</span></button><button class="secondary hidden" id="logout">تسجيل الخروج</button><span id="status" role="status"></span></div>
 <section class="panel hidden" id="setup" aria-hidden="true"></section>
 <section class="panel hidden auth-shell" id="auth">
   <h2>حسابك في أبواب تطمئن</h2>
@@ -48,6 +48,8 @@ input[type="email"],input[type="password"],input[type="url"]{direction:ltr!impor
 <section class="panel"><div class="section-heading"><div><h2>ملخص الأبناء</h2><p class="muted">اختر الابن لعرض تفاصيل تقدمه.</p></div><label class="filter-label" for="parentChildFilter">عرض بيانات</label><select id="parentChildFilter" aria-label="اختيار الابن"><option value="all">جميع الأبناء</option></select></div><div id="children" class="parent-child-grid"></div></section>
 <section class="panel"><div class="section-heading"><div><h2>📨 التقارير الأسبوعية</h2><p class="muted">ملاحظات المشرف والتوصيات المنشورة للأسرة.</p></div></div><div id="parentReports" class="card-list"></div></section>
 </div>
+<section class="panel no-print"><div class="actions"><button class="secondary" id="refresh">تحديث البيانات</button><button class="secondary" onclick="window.print()">طباعة الصفحة</button></div></section></div><section id="accountView" class="hidden account-page">
+<div class="account-page-top"><button type="button" class="secondary" id="accountBack">← العودة إلى الرئيسية</button><div><span class="eyebrow">مساحتك الخاصة</span><h2>الملف الشخصي</h2><p class="muted">معلوماتك الشخصية وإعدادات الحساب.</p></div><span class="account-avatar" aria-hidden="true">♟</span></div>
 <section class="panel account-panel" id="accountPanel">
 <div class="section-heading"><div><span class="eyebrow">إعداداتك الشخصية</span><h2>حسابي</h2><p class="muted">معلومات حسابك وإعدادات الأمان.</p></div><span class="account-avatar" aria-hidden="true">👤</span></div>
 <div class="account-details">
@@ -62,4 +64,5 @@ input[type="email"],input[type="password"],input[type="url"]{direction:ltr!impor
 <button type="submit">حفظ كلمة المرور</button>
 </form><p class="muted">قد يطلب منك النظام تسجيل الدخول مجددًا بعد تغيير كلمة المرور.</p>
 </details>
-</section><section class="panel no-print"><div class="actions"><button class="secondary" id="refresh">تحديث البيانات</button><button class="secondary" onclick="window.print()">طباعة الصفحة</button></div></section></div><footer>أبواب تطمئن — معًا نرعى التقدّم ونصنع النجاح. المزامنة عبر Supabase بعد إعداد الاتصال. لا تستخدم بيانات طلاب حقيقية قبل مراجعة سياسة الخصوصية وصلاحيات المؤسسة.</footer></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="app.js?v=student-parent1"></script></body></html>
+</section>
+</section><footer>أبواب تطمئن — معًا نرعى التقدّم ونصنع النجاح. المزامنة عبر Supabase بعد إعداد الاتصال. لا تستخدم بيانات طلاب حقيقية قبل مراجعة سياسة الخصوصية وصلاحيات المؤسسة.</footer></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="app.js?v=account-page1"></script></body></html>
