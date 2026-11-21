@@ -63,7 +63,26 @@ $('loginForm').onsubmit=async e=>{e.preventDefault();try{notice('جارٍ تسج
 $('signupForm').onsubmit=async e=>{e.preventDefault();try{const email=$('signupEmail').value.trim().toLowerCase();check(await db.auth.signUp({email,password:$('signupPassword').value,options:{data:{full_name:$('signupName').value.trim()}}}));notice('تم تقديم التسجيل. تحقق من بريدك للتفعيل ثم سجل الدخول.')}catch(x){notice(x.message,true)}};
 $('logout').onclick=async()=>{await db.auth.signOut();user=null;profile=null;show('app',false);show('auth');show('logout',false);$('who').textContent='';notice('تم تسجيل الخروج')};
 $('refresh').onclick=()=>refresh();
-async function loadSession(){const {data:{user:u},error}=await db.auth.getUser();if(error||!u){show('auth');return}user=u;const p=check(await db.from('profiles').select('*').eq('id',u.id).maybeSingle());if(!p){notice('الحساب غير مخوّل. اطلب دعوة من المشرف.',true);await db.auth.signOut();return}profile=p;show('auth',false);show('app');show('logout');$('who').textContent=p.full_name+' · '+({admin:'مشرف',student:'طالب',parent:'ولي أمر'}[p.role]||p.role);$('welcome').textContent='مرحبًا، '+p.full_name;$('roleDescription').textContent={admin:'إدارة الطلاب والتقارير والروابط الأسرية',student:'أنت وحدك من يعتمد إكمال المهام',parent:'اطلع على إنجازات أبنائك وتقارير المشرف'}[p.role];$('roleMotto').textContent={admin:'كل طالب أمانة، وكل تقدّم مسؤولية.',student:'إنجاز اليوم هو بداية نجاح الغد.',parent:'كن قريبًا من إنجازاته، وشريكًا في نجاحه.'}[p.role];['studentView','adminView','parentView'].forEach(id=>show(id,id===p.role+'View'));await refresh()}
+async function loadSession(){const {data:{user:u},error}=await db.auth.getUser();if(error||!u){show('auth');return}user=u;const p=check(await db.from('profiles').select('*').eq('id',u.id).maybeSingle());if(!p){notice('الحساب غير مخوّل. اطلب دعوة من المشرف.',true);await db.auth.signOut();return}profile=p;renderAccount();show('auth',false);show('app');show('logout');$('who').textContent=p.full_name+' · '+({admin:'مشرف',student:'طالب',parent:'ولي أمر'}[p.role]||p.role);$('welcome').textContent='مرحبًا، '+p.full_name;$('roleDescription').textContent={admin:'إدارة الطلاب والتقارير والروابط الأسرية',student:'أنت وحدك من يعتمد إكمال المهام',parent:'اطلع على إنجازات أبنائك وتقارير المشرف'}[p.role];$('roleMotto').textContent={admin:'كل طالب أمانة، وكل تقدّم مسؤولية.',student:'إنجاز اليوم هو بداية نجاح الغد.',parent:'كن قريبًا من إنجازاته، وشريكًا في نجاحه.'}[p.role];['studentView','adminView','parentView'].forEach(id=>show(id,id===p.role+'View'));await refresh()}
+function renderAccount(){
+  $('accountName').textContent=profile?.full_name||'—';
+  $('accountEmail').textContent=user?.email||'—';
+  $('accountRole').textContent=({admin:'مشرف',student:'طالب',parent:'ولي أمر'}[profile?.role]||'—');
+}
+$('changePasswordForm').onsubmit=async e=>{
+  e.preventDefault();
+  const password=$('accountNewPassword').value;
+  if(password.length<8){notice('كلمة المرور يجب ألا تقل عن 8 أحرف.',true);return}
+  if(password!==$('accountConfirmPassword').value){notice('كلمتا المرور غير متطابقتين.',true);return}
+  const button=$('changePasswordForm').querySelector('button[type="submit"]');
+  button.disabled=true;
+  try{
+    check(await db.auth.updateUser({password}));
+    $('changePasswordForm').reset();
+    notice('تم تحديث كلمة المرور بنجاح.');
+  }catch(x){notice('تعذر تحديث كلمة المرور: '+x.message,true)}
+  finally{button.disabled=false}
+};
 async function refresh(){if(!profile)return;try{notice('جارٍ تحديث البيانات...');if(profile.role==='student')await studentLoad();if(profile.role==='admin')await adminLoad();if(profile.role==='parent')await parentLoad();notice('البيانات محدّثة')}catch(x){notice('تعذر تحديث البيانات: '+x.message,true)}}
 const stats=rows=>{const tasks=rows.filter(x=>x.watched||x.practiced).reduce((a,x)=>a+Number(x.watched)+Number(x.practiced),0),done=rows.filter(x=>x.watched&&x.practiced).length;return {tasks,done,points:tasks*10,percent:Math.round(tasks/46*100)}};
 async function studentLoad(){progress=check(await db.from('progress').select('*').eq('student_id',user.id));renderStudent()}
@@ -141,7 +160,47 @@ $('adminNext').onclick=()=>{adminPage++;renderAdminStudents()};
 $('inviteForm').onsubmit=async e=>{e.preventDefault();try{check(await db.from('invitations').insert({email:$('inviteEmail').value.trim().toLowerCase(),role:$('inviteRole').value}));notice('تم حفظ الدعوة. شارك رابط الموقع مع المستخدم.');$('inviteForm').reset()}catch(x){notice(x.message,true)}};
 $('linkForm').onsubmit=async e=>{e.preventDefault();try{check(await db.from('parent_student').insert({parent_id:$('parentSelect').value,student_id:$('studentSelect').value}));await adminLoad();notice('تم الربط بنجاح')}catch(x){notice(x.message,true)}};
 $('reportForm').onsubmit=async e=>{e.preventDefault();try{const sid=$('reportStudent').value;const s=stats(progress.filter(x=>x.student_id===sid));check(await db.from('reports').insert({student_id:sid,author_id:user.id,title:$('reportTitle').value.trim(),notes:$('reportNotes').value.trim(),points:s.points,completed:s.done,percent:s.percent}));$('reportNotes').value='';await adminLoad();notice('تم نشر التقرير لولي الأمر المرتبط بالطالب')}catch(x){notice(x.message,true)}};
-async function parentLoad(){links=check(await db.from('parent_student').select('*').eq('parent_id',user.id));const ids=links.map(x=>x.student_id);if(!ids.length){$('children').innerHTML='<p class="notice">لم يربط المشرف أي طالب بحسابك بعد.</p>';$('parentReports').innerHTML='';return}students=check(await db.from('profiles').select('id,full_name').in('id',ids));progress=check(await db.from('progress').select('*').in('student_id',ids));reports=check(await db.from('reports').select('*').in('student_id',ids).order('created_at',{ascending:false}));$('children').innerHTML=students.map(s=>{const a=stats(progress.filter(x=>x.student_id===s.id));return `<div class="report"><h3>${esc(s.full_name)}</h3><p>${a.done} من 23 محاضرة · ${a.points} نقطة · ${a.percent}% إنجاز</p><div class="bar"><i style="width:${a.percent}%"></i></div><details><summary>تفاصيل المحاضرات</summary>${plan.flatMap(d=>d.lectures).map(n=>{const x=progress.find(p=>p.student_id===s.id&&p.lecture===n);return `<p>المحاضرة ${n}: مشاهدة ${x?.watched?'✓':'—'} · تدريب ${x?.practiced?'✓':'—'}</p>`}).join('')}</details></div>`}).join('');$('parentReports').innerHTML=reports.map(reportCard).join('')||'<p class="muted">لم ينشر المشرف أي تقرير بعد.</p>'}
+async function parentLoad(){
+  links=check(await db.from('parent_student').select('*').eq('parent_id',user.id));
+  const ids=links.map(x=>x.student_id);
+  const filter=$('parentChildFilter');
+  if(!ids.length){
+    students=[];progress=[];reports=[];
+    $('parentChildrenCount').textContent='0';$('parentAverage').textContent='0%';$('parentTasks').textContent='0';
+    filter.innerHTML='<option value="all">جميع الأبناء</option>';
+    $('children').innerHTML='<p class="notice">لم يربط المشرف أي طالب بحسابك بعد. تواصل مع المشرف لإتمام الربط.</p>';
+    $('parentReports').innerHTML='<p class="muted">ستظهر التقارير هنا بعد ربط حسابك بطالب ونشر تقرير له.</p>';
+    return;
+  }
+  students=check(await db.from('profiles').select('id,full_name').in('id',ids));
+  progress=check(await db.from('progress').select('*').in('student_id',ids));
+  reports=check(await db.from('reports').select('*').in('student_id',ids).order('created_at',{ascending:false}));
+  const previous=filter.value;
+  filter.innerHTML='<option value="all">جميع الأبناء</option>'+students.map(s=>`<option value="${s.id}">${esc(s.full_name)}</option>`).join('');
+  if(ids.includes(previous))filter.value=previous;
+  const summaries=students.map(s=>stats(progress.filter(x=>x.student_id===s.id)));
+  const totalTasks=summaries.reduce((n,s)=>n+s.tasks,0);
+  const average=summaries.length?Math.round(summaries.reduce((n,s)=>n+s.percent,0)/summaries.length):0;
+  $('parentChildrenCount').textContent=students.length;
+  $('parentAverage').textContent=average+'%';
+  $('parentTasks').textContent=totalTasks;
+  renderParentChildren();
+  $('parentReports').innerHTML=reports.map(reportCard).join('')||'<p class="muted">لم ينشر المشرف أي تقرير بعد.</p>';
+}
+function renderParentChildren(){
+  const selected=$('parentChildFilter').value;
+  const visible=selected==='all'?students:students.filter(s=>s.id===selected);
+  $('children').innerHTML=visible.map(s=>{
+    const rows=progress.filter(x=>x.student_id===s.id),a=stats(rows);
+    const stages=plan.map(d=>{
+      const count=d.lectures.filter(n=>{const x=rows.find(p=>p.lecture===n);return !!(x?.watched&&x?.practiced)}).length;
+      return `<div class="stage-progress"><div><span>${esc(d.name)}</span><strong>${count}/${d.lectures.length}</strong></div><div class="bar"><i style="width:${Math.round(count/d.lectures.length*100)}%"></i></div></div>`;
+    }).join('');
+    const lastReport=reports.find(r=>r.student_id===s.id);
+    return `<article class="child-card"><div class="child-card-top"><div><span class="eyebrow">ملف الطالب</span><h3>${esc(s.full_name)}</h3></div><span class="child-percent">${a.percent}%</span></div><div class="child-metrics"><div><strong>${a.done}/23</strong><span>محاضرة مكتملة</span></div><div><strong>${a.points}</strong><span>نقطة</span></div><div><strong>${a.tasks}/46</strong><span>مهمة منجزة</span></div></div><div class="bar child-main-bar"><i style="width:${a.percent}%"></i></div><h4>التقدم حسب المرحلة</h4><div class="stage-list">${stages}</div><p class="muted child-last-report">${lastReport?'آخر تقرير: '+new Date(lastReport.created_at).toLocaleDateString('ar-SA'):'لا يوجد تقرير منشور بعد'}</p></article>`;
+  }).join('')||'<p class="muted">لا توجد بيانات للعرض.</p>';
+}
+$('parentChildFilter').onchange=renderParentChildren;
 function reportCard(r){const student=students.find(s=>s.id===r.student_id);return `<article class="report"><strong>${esc(r.title)}</strong><p class="muted">${esc(student?.full_name||'الطالب')} · ${new Date(r.created_at).toLocaleDateString('ar-SA')}</p><p>${esc(r.notes)}</p><p>المكتمل: ${r.completed}/23 · النقاط: ${r.points} · نسبة الإنجاز: ${r.percent}%</p>${profile.role==='admin'?`<button class="secondary emailReport" data-report="${r.id}">تجهيز رسالة بريد لولي الأمر</button>`:''}</article>`}
 function bindEmailButtons(){$('adminReports').querySelectorAll('.emailReport').forEach(b=>b.onclick=()=>{const r=reports.find(x=>x.id===b.dataset.report),s=students.find(x=>x.id===r.student_id),emails=links.filter(x=>x.student_id===r.student_id).map(x=>parents.find(p=>p.id===x.parent_id)?.email).filter(Boolean);if(!emails.length){notice('اربط ولي أمر بالطالب أولًا',true);return}const body=`الطالب: ${s.full_name}\n${r.title}\n${r.notes}\nالمحاضرات المكتملة: ${r.completed}/23\nالنقاط: ${r.points}\nنسبة الإنجاز: ${r.percent}%`;location.href='mailto:'+emails.map(encodeURIComponent).join(',')+'?subject='+encodeURIComponent(r.title)+'&body='+encodeURIComponent(body)})}
 if(initDb()){
